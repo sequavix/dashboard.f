@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NOVUS Smart — Wheelchair Control &amp; Monitoring</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-logo">
+        <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="18" cy="18" r="16" stroke="#00d4ff" stroke-width="2"/>
+          <circle cx="18" cy="18" r="8" fill="#00d4ff" fill-opacity="0.15"/>
+          <path d="M12 18 L18 10 L24 18 L18 26 Z" fill="#00d4ff"/>
+          <circle cx="18" cy="18" r="3" fill="#00d4ff"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <span class="brand-name">NOVUS</span>
+        <span class="brand-sub">SMART</span>
+      </div>
+    </div>
+    <div class="sidebar-demo-badge">● SIMULATION MODE</div>
+    <nav class="sidebar-nav">
+      <a class="nav-item active" data-screen="dashboard" onclick="showScreen('dashboard')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        <span>Dashboard</span>
+      </a>
+      <a class="nav-item" data-screen="control" onclick="showScreen('control')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><circle cx="12" cy="12" r="9" stroke-dasharray="3 2"/></svg>
+        <span>Wheelchair Control</span>
+      </a>
+      <a class="nav-item" data-screen="battery" onclick="showScreen('battery')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="18" height="10" rx="2"/><path d="M22 11v2"/><path d="M7 11h4m0 0v-2m0 2v2" stroke-linecap="round"/></svg>
+        <span>Battery Monitor</span>
+      </a>
+      <a class="nav-item" data-screen="motors" onclick="showScreen('motors')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.636 5.636l1.414 1.414M16.95 16.95l1.414 1.414M5.636 18.364l1.414-1.414M16.95 7.05l1.414-1.414"/></svg>
+        <span>Motor Diagnostics</span>
+      </a>
+      <a class="nav-item" data-screen="ai" onclick="showScreen('ai')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-1.14"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-1.14"/></svg>
+        <span>AI Health</span>
+      </a>
+      <a class="nav-item" data-screen="history" onclick="showScreen('history')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <span>History &amp; Analytics</span>
+      </a>
+      <a class="nav-item" data-screen="settings" onclick="showScreen('settings')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        <span>Settings</span>
+      </a>
+    </nav>
+    <div class="sidebar-ble">
+      <div class="ble-status" id="sidebarBle">
+        <div class="ble-dot disconnected" id="bleDot"></div>
+        <span id="bleText">Disconnected</span>
+      </div>
+      <button class="ble-btn" id="bleToggleBtn" onclick="toggleBLE()">Connect BLE</button>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+    <div class="topbar">
+      <button class="sidebar-toggle" onclick="toggleSidebar()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <div class="topbar-title" id="topbarTitle">Dashboard</div>
+      <div class="topbar-right">
+        <div class="demo-pill">⚡ DEMO</div>
+        <div class="topbar-time" id="topbarTime"></div>
+      </div>
+    </div>
+
+    <!-- ===================== SCREEN: DASHBOARD ===================== -->
+    <section class="screen active" id="screen-dashboard">
+      <div class="screen-header">
+        <div>
+          <h1>System Overview</h1>
+          <p class="screen-sub">Real-time wheelchair monitoring &amp; status</p>
+        </div>
+        <div class="system-health-badge" id="sysHealthBadge">
+          <span class="health-dot"></span>
+          <span id="sysHealthText">System Nominal</span>
+        </div>
+      </div>
+
+      <!-- Status Banner -->
+      <div class="status-banner" id="statusBanner">
+        <div class="banner-icon">🔵</div>
+        <div class="banner-msg">Running in <strong>Simulation Mode</strong>. No hardware connected. Data shown is for demonstration only.</div>
+      </div>
+
+      <!-- KPI Cards Row -->
+      <div class="kpi-grid">
+        <div class="kpi-card kpi-battery">
+          <div class="kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="18" height="10" rx="2"/><path d="M22 11v2"/></svg>
+          </div>
+          <div class="kpi-body">
+            <div class="kpi-label">Battery SOC</div>
+            <div class="kpi-value" id="dashBatPct">78<span class="kpi-unit">%</span></div>
+            <div class="kpi-sub" id="dashBatVoltage">36.4 V · 2.1 A</div>
+          </div>
+          <div class="kpi-ring">
+            <svg viewBox="0 0 44 44" class="ring-svg">
+              <circle cx="22" cy="22" r="18" class="ring-bg"/>
+              <circle cx="22" cy="22" r="18" class="ring-fg battery-ring" id="dashBatRing" stroke-dasharray="113.1" stroke-dashoffset="24.9"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="kpi-card kpi-speed">
+          <div class="kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 0 1 10 10 10 10 0 0 1-10 10A10 10 0 0 1 2 12 10 10 0 0 1 12 2m0 0v4M12 12l6-2"/></svg>
+          </div>
+          <div class="kpi-body">
+            <div class="kpi-label">Current Speed</div>
+            <div class="kpi-value" id="dashSpeed">0.0<span class="kpi-unit"> km/h</span></div>
+            <div class="kpi-sub">Max: 6.5 km/h</div>
+          </div>
+        </div>
+
+        <div class="kpi-card kpi-runtime">
+          <div class="kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div class="kpi-body">
+            <div class="kpi-label">Est. Runtime</div>
+            <div class="kpi-value" id="dashRuntime">3h 24m</div>
+            <div class="kpi-sub" id="dashDist">Distance: 2.4 km</div>
+          </div>
+        </div>
+
+        <div class="kpi-card kpi-temp">
+          <div class="kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
+          </div>
+          <div class="kpi-body">
+            <div class="kpi-label">Battery Temp</div>
+            <div class="kpi-value" id="dashBatTemp">32<span class="kpi-unit">°C</span></div>
+            <div class="kpi-sub">Normal range &lt;45°C</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Motor Status + Warnings -->
+      <div class="dash-middle-grid">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Motor Status</span>
+            <span class="badge badge-ok">Normal</span>
+          </div>
+          <div class="motor-dual">
+            <div class="motor-mini" id="motorL">
+              <div class="motor-mini-label">LEFT MOTOR</div>
+              <div class="motor-mini-rpm" id="dashLRpm">0 <span>RPM</span></div>
+              <div class="motor-bar-wrap"><div class="motor-bar-fill" id="dashLBar" style="width:0%"></div></div>
+              <div class="motor-mini-stat" id="dashLAmp">0.0 A · 28°C</div>
+            </div>
+            <div class="motor-divider"></div>
+            <div class="motor-mini" id="motorR">
+              <div class="motor-mini-label">RIGHT MOTOR</div>
+              <div class="motor-mini-rpm" id="dashRRpm">0 <span>RPM</span></div>
+              <div class="motor-bar-wrap"><div class="motor-bar-fill" id="dashRBar" style="width:0%"></div></div>
+              <div class="motor-mini-stat" id="dashRAmp">0.0 A · 29°C</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Active Warnings</span>
+            <span class="badge badge-warn" id="warnCount">0</span>
+          </div>
+          <div id="warningList" class="warning-list">
+            <div class="no-warnings">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="32"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              <span>All systems nominal</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Nav Cards -->
+      <div class="nav-cards-grid">
+        <div class="nav-card" onclick="showScreen('control')">
+          <div class="nav-card-icon cyan">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+          </div>
+          <div class="nav-card-body">
+            <div class="nav-card-title">Wheelchair Control</div>
+            <div class="nav-card-sub">Virtual joystick &amp; speed control</div>
+          </div>
+          <div class="nav-card-arrow">→</div>
+        </div>
+        <div class="nav-card" onclick="showScreen('battery')">
+          <div class="nav-card-icon green">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="18" height="10" rx="2"/><path d="M22 11v2"/></svg>
+          </div>
+          <div class="nav-card-body">
+            <div class="nav-card-title">Battery Monitoring</div>
+            <div class="nav-card-sub">SOC, voltage &amp; thermal data</div>
+          </div>
+          <div class="nav-card-arrow">→</div>
+        </div>
+        <div class="nav-card" onclick="showScreen('motors')">
+          <div class="nav-card-icon amber">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg>
+          </div>
+          <div class="nav-card-body">
+            <div class="nav-card-title">Motor Diagnostics</div>
+            <div class="nav-card-sub">RPM, current &amp; fault codes</div>
+          </div>
+          <div class="nav-card-arrow">→</div>
+        </div>
+        <div class="nav-card" onclick="showScreen('ai')">
+          <div class="nav-card-icon purple">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46"/></svg>
+          </div>
+          <div class="nav-card-body">
+            <div class="nav-card-title">AI Health Monitor</div>
+            <div class="nav-card-sub">Anomaly detection &amp; recommendations</div>
+          </div>
+          <div class="nav-card-arrow">→</div>
+        </div>
+        <div class="nav-card" onclick="showScreen('history')">
+          <div class="nav-card-icon teal">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <div class="nav-card-body">
+            <div class="nav-card-title">History &amp; Analytics</div>
+            <div class="nav-card-sub">Session logs &amp; trend charts</div>
+          </div>
+          <div class="nav-card-arrow">→</div>
+        </div>
+        <div class="nav-card" onclick="showScreen('settings')">
+          <div class="nav-card-icon grey">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42"/></svg>
+          </div>
+          <div class="nav-card-body">
+            <div class="nav-card-title">Settings</div>
+            <div class="nav-card-sub">BLE config &amp; thresholds</div>
+          </div>
+          <div class="nav-card-arrow">→</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== SCREEN: CONTROL ===================== -->
+    <section class="screen" id="screen-control">
+      <div class="screen-header">
+        <div>
+          <h1>Wheelchair Control</h1>
+          <p class="screen-sub">Virtual joystick interface — simulation mode</p>
+        </div>
+        <div class="estop-btn" id="estopBtn" onclick="emergencyStop()">⛔ E-STOP</div>
+      </div>
+
+      <div class="control-safety-banner">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span>SIMULATION ONLY — No commands are sent to real hardware. Physical joystick and hardware emergency stop take precedence in real deployments.</span>
+      </div>
+
+      <div class="control-layout">
+        <!-- Left Panel: Status -->
+        <div class="control-stats">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Control Status</span></div>
+            <div class="ctrl-stat-list">
+              <div class="ctrl-stat-row">
+                <span>Control Mode</span>
+                <span class="badge badge-warn" id="ctrlModeLabel">Phone (Sim)</span>
+              </div>
+              <div class="ctrl-stat-row">
+                <span>Authorization</span>
+                <span class="badge badge-ok" id="ctrlAuthLabel">Sim Granted</span>
+              </div>
+              <div class="ctrl-stat-row">
+                <span>BLE Status</span>
+                <span id="ctrlBleLabel" class="badge badge-off">Disconnected</span>
+              </div>
+              <div class="ctrl-stat-row">
+                <span>Heartbeat</span>
+                <span id="ctrlHeartbeat" class="mono">—</span>
+              </div>
+              <div class="ctrl-stat-row">
+                <span>Seq #</span>
+                <span id="ctrlSeq" class="mono">0</span>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Speed Control</span></div>
+            <div class="speed-ctrl">
+              <div class="speed-display" id="ctrlSpeedDisplay">0.0 <span>km/h</span></div>
+              <div class="speed-limit-row">
+                <span>Max Speed</span>
+                <span id="speedLimitLabel">6.5 km/h</span>
+              </div>
+              <input type="range" class="speed-slider" id="speedLimitSlider" min="1" max="6.5" step="0.5" value="6.5" oninput="updateSpeedLimit(this.value)"/>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Joystick Output</span></div>
+            <div class="joystick-output">
+              <div class="joy-out-row"><span>X-Axis</span><div class="joy-bar-wrap"><div class="joy-bar-fill cyan" id="joyXBar" style="width:50%"></div></div><span class="mono" id="joyXVal">0.00</span></div>
+              <div class="joy-out-row"><span>Y-Axis</span><div class="joy-bar-wrap"><div class="joy-bar-fill green" id="joyYBar" style="width:50%"></div></div><span class="mono" id="joyYVal">0.00</span></div>
+              <div class="joy-direction" id="joyDirection">STOPPED</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Center: Joystick -->
+        <div class="joystick-panel">
+          <div class="joystick-wrap" id="joystickWrap">
+            <div class="joystick-zone" id="joystickZone">
+              <div class="joy-crosshair-h"></div>
+              <div class="joy-crosshair-v"></div>
+              <div class="joy-deadzone"></div>
+              <div class="joy-thumb" id="joyThumb"></div>
+            </div>
+            <div class="joy-labels">
+              <div class="joy-label-top">FORWARD</div>
+              <div class="joy-label-bottom">REVERSE</div>
+              <div class="joy-label-left">LEFT</div>
+              <div class="joy-label-right">RIGHT</div>
+            </div>
+          </div>
+          <div class="joy-hint">Click &amp; drag to control — release to stop</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== SCREEN: BATTERY ===================== -->
+    <section class="screen" id="screen-battery">
+      <div class="screen-header">
+        <div>
+          <h1>Battery Monitoring</h1>
+          <p class="screen-sub">36 V / 10 Ah Li-ion · BMS 15 A · 360 Wh nominal</p>
+        </div>
+        <div class="badge badge-sim">SIMULATED</div>
+      </div>
+
+      <div class="battery-kpi-grid">
+        <div class="bat-kpi-card" id="batSocCard">
+          <div class="bat-kpi-label">State of Charge</div>
+          <div class="bat-soc-visual">
+            <svg class="bat-icon-svg" viewBox="0 0 60 28" fill="none">
+              <rect x="1" y="1" width="54" height="26" rx="4" stroke="#00d4ff" stroke-width="2"/>
+              <rect x="55" y="9" width="4" height="10" rx="2" fill="#00d4ff"/>
+              <rect id="batFill" x="3" y="3" width="43" height="22" rx="2" fill="#00d4ff" fill-opacity="0.7"/>
+            </svg>
+          </div>
+          <div class="bat-kpi-val" id="batSocVal">78%</div>
+          <div class="bat-kpi-method">Method: Coulomb Counting (est.)</div>
+        </div>
+        <div class="bat-kpi-card">
+          <div class="bat-kpi-label">Voltage</div>
+          <div class="bat-kpi-val large cyan" id="batVoltVal">36.4 V</div>
+          <div class="bat-kpi-method">Nominal 36 V</div>
+        </div>
+        <div class="bat-kpi-card">
+          <div class="bat-kpi-label">Current Draw</div>
+          <div class="bat-kpi-val large green" id="batCurrVal">2.1 A</div>
+          <div class="bat-kpi-method">BMS Limit: 15 A</div>
+        </div>
+        <div class="bat-kpi-card">
+          <div class="bat-kpi-label">Temperature</div>
+          <div class="bat-kpi-val large" id="batTempVal">32°C</div>
+          <div class="bat-kpi-method">Warn &gt;45°C · Crit &gt;60°C</div>
+        </div>
+        <div class="bat-kpi-card">
+          <div class="bat-kpi-label">Est. Remaining Ah</div>
+          <div class="bat-kpi-val large amber" id="batAhVal">7.8 Ah</div>
+          <div class="bat-kpi-method">Nominal capacity: 10 Ah</div>
+        </div>
+        <div class="bat-kpi-card">
+          <div class="bat-kpi-label">Est. Runtime</div>
+          <div class="bat-kpi-val large" id="batRtVal">3h 42m</div>
+          <div class="bat-kpi-method">At current draw rate</div>
+        </div>
+      </div>
+
+      <div class="bat-state-row">
+        <div class="bat-state-pill" id="batStatePill">⚡ DISCHARGING</div>
+        <div class="bat-fault-row" id="batFaultRow">
+          <span class="fault-ok">✓ BMS Nominal</span>
+          <span class="fault-ok">✓ Temp Normal</span>
+          <span class="fault-ok">✓ Current Normal</span>
+          <span class="fault-ok">✓ Voltage Normal</span>
+        </div>
+      </div>
+
+      <div class="charts-2col">
+        <div class="card chart-card">
+          <div class="card-header"><span class="card-title">Voltage History</span><span class="badge badge-sim">Sim</span></div>
+          <canvas id="batVoltChart"></canvas>
+        </div>
+        <div class="card chart-card">
+          <div class="card-header"><span class="card-title">Current History</span><span class="badge badge-sim">Sim</span></div>
+          <canvas id="batCurrChart"></canvas>
+        </div>
+        <div class="card chart-card">
+          <div class="card-header"><span class="card-title">Temperature History</span><span class="badge badge-sim">Sim</span></div>
+          <canvas id="batTempChart"></canvas>
+        </div>
+        <div class="card chart-card">
+          <div class="card-header"><span class="card-title">Energy Consumption</span><span class="badge badge-sim">Sim</span></div>
+          <canvas id="batEnergyChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== SCREEN: MOTORS ===================== -->
+    <section class="screen" id="screen-motors">
+      <div class="screen-header">
+        <div>
+          <h1>Motor Diagnostics</h1>
+          <p class="screen-sub">Dual 170 KV BLDC · VESC FOC controllers</p>
+        </div>
+        <div class="badge badge-sim">SIMULATED</div>
+      </div>
+
+      <div class="motors-dual-grid">
+        <!-- LEFT MOTOR -->
+        <div class="card motor-card">
+          <div class="card-header">
+            <div class="motor-label-row">
+              <div class="motor-indicator left-indicator"></div>
+              <span class="card-title">Left Motor</span>
+            </div>
+            <span class="badge badge-ok" id="mLeftStatus">Nominal</span>
+          </div>
+          <div class="motor-stats-grid">
+            <div class="motor-stat"><div class="ms-label">RPM</div><div class="ms-val cyan" id="mLeftRpm">0</div></div>
+            <div class="motor-stat"><div class="ms-label">Current</div><div class="ms-val green" id="mLeftAmp">0.0 A</div></div>
+            <div class="motor-stat"><div class="ms-label">Motor Temp</div><div class="ms-val" id="mLeftMTemp">28°C</div></div>
+            <div class="motor-stat"><div class="ms-label">VESC Temp</div><div class="ms-val" id="mLeftVTemp">35°C</div></div>
+            <div class="motor-stat"><div class="ms-label">Power</div><div class="ms-val amber" id="mLeftPow">0.0 W</div></div>
+            <div class="motor-stat"><div class="ms-label">Fault Code</div><div class="ms-val green" id="mLeftFault">NONE</div></div>
+          </div>
+          <div class="motor-rpm-bar-wrap">
+            <div class="motor-rpm-label-row"><span>RPM Load</span><span id="mLeftRpmPct">0%</span></div>
+            <div class="motor-bar-wrap full"><div class="motor-bar-fill cyan" id="mLeftRpmBar" style="width:0%"></div></div>
+          </div>
+          <div class="comm-status-row"><span class="comm-dot green" id="mLeftComm"></span><span id="mLeftCommTxt">VESC Comm OK</span></div>
+        </div>
+
+        <!-- RIGHT MOTOR -->
+        <div class="card motor-card">
+          <div class="card-header">
+            <div class="motor-label-row">
+              <div class="motor-indicator right-indicator"></div>
+              <span class="card-title">Right Motor</span>
+            </div>
+            <span class="badge badge-ok" id="mRightStatus">Nominal</span>
+          </div>
+          <div class="motor-stats-grid">
+            <div class="motor-stat"><div class="ms-label">RPM</div><div class="ms-val cyan" id="mRightRpm">0</div></div>
+            <div class="motor-stat"><div class="ms-label">Current</div><div class="ms-val green" id="mRightAmp">0.0 A</div></div>
+            <div class="motor-stat"><div class="ms-label">Motor Temp</div><div class="ms-val" id="mRightMTemp">29°C</div></div>
+            <div class="motor-stat"><div class="ms-label">VESC Temp</div><div class="ms-val" id="mRightVTemp">36°C</div></div>
+            <div class="motor-stat"><div class="ms-label">Power</div><div class="ms-val amber" id="mRightPow">0.0 W</div></div>
+            <div class="motor-stat"><div class="ms-label">Fault Code</div><div class="ms-val green" id="mRightFault">NONE</div></div>
+          </div>
+          <div class="motor-rpm-bar-wrap">
+            <div class="motor-rpm-label-row"><span>RPM Load</span><span id="mRightRpmPct">0%</span></div>
+            <div class="motor-bar-wrap full"><div class="motor-bar-fill cyan" id="mRightRpmBar" style="width:0%"></div></div>
+          </div>
+          <div class="comm-status-row"><span class="comm-dot green" id="mRightComm"></span><span id="mRightCommTxt">VESC Comm OK</span></div>
+        </div>
+      </div>
+
+      <!-- Motor Charts -->
+      <div class="charts-2col">
+        <div class="card chart-card">
+          <div class="card-header"><span class="card-title">L/R Motor RPM Comparison</span></div>
+          <canvas id="motorRpmChart"></canvas>
+        </div>
+        <div class="card chart-card">
+          <div class="card-header"><span class="card-title">L/R Motor Current</span></div>
+          <canvas id="motorCurrChart"></canvas>
+        </div>
+        <div class="card chart-card">
+          <div class="card-header"><span class="card-title">Motor Temperature History</span></div>
+          <canvas id="motorTempChart"></canvas>
+        </div>
+        <div class="card chart-card">
+          <div class="card-header"><span class="card-title">VESC Temperature</span></div>
+          <canvas id="vescTempChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== SCREEN: AI HEALTH ===================== -->
+    <section class="screen" id="screen-ai">
+      <div class="screen-header">
+        <div>
+          <h1>AI Health Monitor</h1>
+          <p class="screen-sub">Simulated anomaly detection — Isolation Forest model placeholder</p>
+        </div>
+        <div class="badge badge-sim">SIMULATED MODEL</div>
+      </div>
+
+      <div class="ai-notice">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>No trained AI model is currently deployed. Scores shown are <strong>simulated outputs</strong> for UI demonstration. A real Isolation Forest model requires a validated dataset from actual wheelchair operation.</span>
+      </div>
+
+      <div class="ai-score-grid">
+        <div class="card ai-score-card">
+          <div class="ai-score-label">System Health Score</div>
+          <div class="ai-score-ring">
+            <svg viewBox="0 0 120 120" width="120" height="120">
+              <circle cx="60" cy="60" r="50" fill="none" stroke="#1e2d3d" stroke-width="12"/>
+              <circle cx="60" cy="60" r="50" fill="none" stroke="#00d4ff" stroke-width="12"
+                stroke-dasharray="314" stroke-dashoffset="56" id="aiScoreRing" stroke-linecap="round" transform="rotate(-90 60 60)"/>
+              <text x="60" y="66" text-anchor="middle" fill="#e8f4fd" font-size="22" font-weight="700" id="aiScoreText">82</text>
+            </svg>
+          </div>
+          <div class="ai-score-sub">Based on simulated telemetry patterns</div>
+        </div>
+        <div class="card ai-anomaly-card">
+          <div class="card-header"><span class="card-title">Anomaly Status</span></div>
+          <div class="anomaly-list" id="anomalyList">
+            <div class="anomaly-item ok">
+              <span class="anomaly-dot ok"></span>
+              <div>
+                <div class="anomaly-title">Battery Consumption</div>
+                <div class="anomaly-sub">Within normal range · Score: 0.12</div>
+              </div>
+            </div>
+            <div class="anomaly-item ok">
+              <span class="anomaly-dot ok"></span>
+              <div>
+                <div class="anomaly-title">Motor Current Pattern</div>
+                <div class="anomaly-sub">Normal asymmetry detected · Score: 0.08</div>
+              </div>
+            </div>
+            <div class="anomaly-item ok">
+              <span class="anomaly-dot ok"></span>
+              <div>
+                <div class="anomaly-title">Temperature Trend</div>
+                <div class="anomaly-sub">Stable thermal profile · Score: 0.05</div>
+              </div>
+            </div>
+            <div class="anomaly-item warn" id="aiAnomalyItem4">
+              <span class="anomaly-dot warn"></span>
+              <div>
+                <div class="anomaly-title">Runtime Prediction</div>
+                <div class="anomaly-sub" id="aiAnomaly4Sub">Slightly higher draw vs baseline · Score: 0.31</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ai-recs-grid">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Maintenance Recommendations</span></div>
+          <div class="rec-list">
+            <div class="rec-item">
+              <div class="rec-icon green">✓</div>
+              <div><div class="rec-title">Battery — No Action Required</div><div class="rec-sub">Charge cycles within normal operational parameters.</div></div>
+            </div>
+            <div class="rec-item">
+              <div class="rec-icon green">✓</div>
+              <div><div class="rec-title">Motor Rollers — Check Friction Surface</div><div class="rec-sub">Recommended every 500 km. Current est. distance: 2.4 km.</div></div>
+            </div>
+            <div class="rec-item">
+              <div class="rec-icon amber">!</div>
+              <div><div class="rec-title">VESC Firmware — Verify Version</div><div class="rec-sub">Confirm VESC firmware matches tested configuration before real deployment.</div></div>
+            </div>
+            <div class="rec-item">
+              <div class="rec-icon amber">!</div>
+              <div><div class="rec-title">BLE Pairing — Validate Bonding Key</div><div class="rec-sub">Implement proper BLE bonding before connecting to real hardware.</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Historical Anomaly Log</span></div>
+          <div class="anomaly-log" id="anomalyLog">
+            <div class="log-row warn"><span class="log-time">14:32:10</span><span class="log-msg">Simulated: Battery draw spike (+0.8A above baseline)</span></div>
+            <div class="log-row ok"><span class="log-time">14:18:42</span><span class="log-msg">System initialized — Simulation mode active</span></div>
+            <div class="log-row ok"><span class="log-time">14:00:00</span><span class="log-msg">Session started — All subsystems normal</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== SCREEN: HISTORY ===================== -->
+    <section class="screen" id="screen-history">
+      <div class="screen-header">
+        <div>
+          <h1>History &amp; Analytics</h1>
+          <p class="screen-sub">Session logs, trend charts &amp; data export</p>
+        </div>
+        <div class="history-controls">
+          <div class="filter-tabs">
+            <button class="filter-tab active" onclick="setHistFilter('day', this)">Day</button>
+            <button class="filter-tab" onclick="setHistFilter('week', this)">Week</button>
+            <button class="filter-tab" onclick="setHistFilter('month', this)">Month</button>
+          </div>
+          <button class="export-btn" onclick="exportCSV()">⬇ Export CSV</button>
+        </div>
+      </div>
+
+      <div class="hist-summary-grid">
+        <div class="hist-summary-card"><div class="hsc-label">Total Distance</div><div class="hsc-val">2.4 km</div></div>
+        <div class="hist-summary-card"><div class="hsc-label">Operating Time</div><div class="hsc-val">36 min</div></div>
+        <div class="hist-summary-card"><div class="hsc-label">Energy Used</div><div class="hsc-val">43.2 Wh</div></div>
+        <div class="hist-summary-card"><div class="hsc-label">Charging Sessions</div><div class="hsc-val">0</div></div>
+        <div class="hist-summary-card"><div class="hsc-label">Fault Events</div><div class="hsc-val red">0</div></div>
+        <div class="hist-summary-card"><div class="hsc-label">Anomaly Events</div><div class="hsc-val amber">1</div></div>
+      </div>
+
+      <div class="charts-2col">
+        <div class="card chart-card">
+          <div class="card-header"><span class="card-title">Battery SOC History</span></div>
+          <canvas id="histSocChart"></canvas>
+        </div>
+        <div class="card chart-card">
+          <div class="card-header"><span class="card-title">Distance per Session</span></div>
+          <canvas id="histDistChart"></canvas>
+        </div>
+        <div class="card chart-card">
+          <div class="card-header"><span class="card-title">Motor Temperature Trend</span></div>
+          <canvas id="histMotorTempChart"></canvas>
+        </div>
+        <div class="card chart-card">
+          <div class="card-header"><span class="card-title">Energy Consumption</span></div>
+          <canvas id="histEnergyChart"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">Session Event Log</span></div>
+        <div class="event-log" id="eventLog">
+          <div class="event-row fault"><span class="ev-time">14:32:10</span><span class="ev-tag warn">ANOMALY</span><span class="ev-msg">Battery draw spike detected (simulated)</span></div>
+          <div class="event-row"><span class="ev-time">14:28:00</span><span class="ev-tag ok">INFO</span><span class="ev-msg">Wheelchair speed: 4.2 km/h (simulated)</span></div>
+          <div class="event-row"><span class="ev-time">14:20:15</span><span class="ev-tag ok">INFO</span><span class="ev-msg">Battery SOC: 82% · Temp: 31°C</span></div>
+          <div class="event-row"><span class="ev-time">14:18:42</span><span class="ev-tag ok">SYS</span><span class="ev-msg">Simulation mode activated</span></div>
+          <div class="event-row"><span class="ev-time">14:00:00</span><span class="ev-tag ok">SYS</span><span class="ev-msg">NOVUS Smart dashboard session started</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== SCREEN: SETTINGS ===================== -->
+    <section class="screen" id="screen-settings">
+      <div class="screen-header">
+        <div>
+          <h1>Settings</h1>
+          <p class="screen-sub">BLE configuration, thresholds &amp; device management</p>
+        </div>
+      </div>
+
+      <div class="settings-grid">
+        <!-- BLE Config -->
+        <div class="card settings-card">
+          <div class="card-header"><span class="card-title">Bluetooth Configuration</span></div>
+          <div class="settings-notice">UUIDs are placeholders. Replace with final ESP32 firmware UUIDs before hardware deployment.</div>
+          <div class="settings-group">
+            <div class="settings-row">
+              <label>Device Name Filter</label>
+              <input type="text" class="settings-input" value="NOVUS-" placeholder="NOVUS-" readonly/>
+            </div>
+            <div class="settings-row">
+              <label>Service UUID</label>
+              <input type="text" class="settings-input mono" value="[PLACEHOLDER — SET BY ESP32 FIRMWARE]" readonly/>
+            </div>
+            <div class="settings-row">
+              <label>Telemetry Char. UUID</label>
+              <input type="text" class="settings-input mono" value="[PLACEHOLDER — TELEMETRY]" readonly/>
+            </div>
+            <div class="settings-row">
+              <label>Control Char. UUID</label>
+              <input type="text" class="settings-input mono" value="[PLACEHOLDER — CONTROL]" readonly/>
+            </div>
+            <div class="settings-row">
+              <label>Status Char. UUID</label>
+              <input type="text" class="settings-input mono" value="[PLACEHOLDER — STATUS]" readonly/>
+            </div>
+            <div class="settings-row">
+              <label>Heartbeat Interval</label>
+              <input type="text" class="settings-input" value="500 ms"/>
+            </div>
+            <div class="settings-row">
+              <label>Command Rate Limit</label>
+              <input type="text" class="settings-input" value="50 ms"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mode Switch -->
+        <div class="card settings-card">
+          <div class="card-header"><span class="card-title">Operation Mode</span></div>
+          <div class="mode-toggle-wrap">
+            <div class="mode-opt active" id="modeSimBtn" onclick="setMode('sim')">
+              <div class="mode-icon">🔵</div>
+              <div class="mode-label">Simulation Mode</div>
+              <div class="mode-desc">No hardware required. All data is generated locally.</div>
+            </div>
+            <div class="mode-opt" id="modeRealBtn" onclick="setMode('real')">
+              <div class="mode-icon">📡</div>
+              <div class="mode-label">Real Hardware Mode</div>
+              <div class="mode-desc">Connects to ESP32 via BLE. Requires paired device.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Battery Thresholds -->
+        <div class="card settings-card">
+          <div class="card-header"><span class="card-title">Battery Safety Thresholds</span></div>
+          <div class="settings-notice">Thresholds must match actual battery and BMS specifications. Do not set values beyond manufacturer limits.</div>
+          <div class="settings-group">
+            <div class="settings-row">
+              <label>Low Battery Warn</label>
+              <input type="number" class="settings-input" value="25" min="10" max="50"/> <span class="settings-unit">%</span>
+            </div>
+            <div class="settings-row">
+              <label>Critical Battery</label>
+              <input type="number" class="settings-input" value="10" min="5" max="20"/> <span class="settings-unit">%</span>
+            </div>
+            <div class="settings-row">
+              <label>Max Temperature</label>
+              <input type="number" class="settings-input" value="45" min="35" max="60"/> <span class="settings-unit">°C</span>
+            </div>
+            <div class="settings-row">
+              <label>Critical Temperature</label>
+              <input type="number" class="settings-input" value="60" min="50" max="75"/> <span class="settings-unit">°C</span>
+            </div>
+            <div class="settings-row">
+              <label>Max Current</label>
+              <input type="number" class="settings-input" value="15" min="10" max="15"/> <span class="settings-unit">A</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Device Info -->
+        <div class="card settings-card">
+          <div class="card-header"><span class="card-title">Device &amp; System Info</span></div>
+          <div class="settings-group">
+            <div class="settings-row"><label>App Version</label><span class="mono">1.0.0-beta</span></div>
+            <div class="settings-row"><label>Build</label><span class="mono">NOVUS-SMART-SIM</span></div>
+            <div class="settings-row"><label>Battery Nominal</label><span class="mono">36 V · 10 Ah · 360 Wh</span></div>
+            <div class="settings-row"><label>BMS Limit</label><span class="mono">15 A</span></div>
+            <div class="settings-row"><label>Target Max Speed</label><span class="mono">6.5 km/h</span></div>
+            <div class="settings-row"><label>Target Range</label><span class="mono">9.6 km</span></div>
+            <div class="settings-row"><label>Target Payload</label><span class="mono">130 kg</span></div>
+            <div class="settings-row"><label>Kit Weight</label><span class="mono">&lt;7 kg</span></div>
+          </div>
+          <div class="settings-disclaimer">⚠ Specifications are design targets. Actual performance depends on operating conditions, terrain, payload, and battery state.</div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
